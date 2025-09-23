@@ -8,8 +8,14 @@ class MyUserManager(BaseUserManager):
         Creates and saves a User with the given email, date of
         birth and password.
         """
-        if not email:
-            raise ValueError("Users must have an email address")
+
+        values_error = [
+            (email, 'Users must have an email address'),
+            (password, 'Users must have a password')
+        ]
+
+        for field, msg in values_error:
+            if not field: raise ValueError(msg)
 
         user = self.model(
             email=self.normalize_email(email),
