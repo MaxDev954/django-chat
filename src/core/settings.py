@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'channels',
     'rest_framework',
 ]
+INSTALLED_APPS += PROJECT_APPS
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
