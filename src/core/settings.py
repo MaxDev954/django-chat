@@ -221,7 +221,6 @@ LOGGING = {
     },
 }
 
+REDIS_URL = os.getenv('REDIS_URL')
 GRAVATAR_URL = "https://www.gravatar.com/avatar/"
-
-
 HOST = os.getenv('HOST')
