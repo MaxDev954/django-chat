@@ -146,3 +146,70 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+LOG_DIR = os.path.join(BASE_DIR, 'logs')
+os.makedirs(LOG_DIR, exist_ok=True)
+
+DJANGO_LOG_FILE = os.path.join(LOG_DIR, 'django.log')
+REDIS_LOG_FILE = os.path.join(LOG_DIR, 'redis.log')
+GENERAL_LOG_FILE = os.path.join(LOG_DIR, 'general.log')
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+
+    'handlers': {
+        'django_file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': DJANGO_LOG_FILE,
+            'formatter': 'verbose',
+        },
+        'redis_file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': REDIS_LOG_FILE,
+            'formatter': 'verbose',
+        },
+        'general_file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': GENERAL_LOG_FILE,
+            'formatter': 'simple',
+        },
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+    },
+
+    'loggers': {
+        'django': {
+            'handlers': ['django_file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'redis': {
+            'handlers': ['redis_file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'general': {
+            'handlers': ['general_file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}
