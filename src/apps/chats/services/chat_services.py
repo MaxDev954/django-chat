@@ -3,7 +3,9 @@ from datetime import datetime
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
-from apps.chats.models import Conversation
+from django.db.models import Manager
+
+from django.db.models.manager import Manager
 from apps.chats.repositories.inter import IMessageRepo
 from apps.chats.exceptions import MessageValidationError, MessageStorageError, MessageRetrievalError
 
@@ -11,7 +13,7 @@ logger = logging.getLogger(__name__)
 MyUser = get_user_model()
 
 class ChatService:
-    def __init__(self, user_repo: MyUser.objects, conversation_repo: Conversation.objects, redis_repo: IMessageRepo, db_repo: IMessageRepo):
+    def __init__(self, user_repo: Manager[MyUser], conversation_repo: Manager, redis_repo: IMessageRepo, db_repo: IMessageRepo):
         self.user_repo = user_repo
         self.conversation_repo = conversation_repo
         self.redis_repo = redis_repo
