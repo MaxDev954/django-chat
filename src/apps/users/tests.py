@@ -1,5 +1,9 @@
+from unittest.mock import patch, MagicMock
+
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 from apps.users.models import MyUser
+from apps.users.services.auth_services import AuthService
 
 
 class MyUserModelTest(TestCase):
@@ -73,3 +77,66 @@ class MyUserModelTest(TestCase):
             last_name="User"
         )
         self.assertTrue(superuser.is_staff)
+
+
+class AuthServiceTest(TestCase):
+    def setUp(self):
+        self.mock_repo = MagicMock()
+        self.service = AuthService(repo=self.mock_repo)
+
+    @patch('apps.users.services.auth_services.validate_signup_data')
+    def test_signup_success(self, mock_validator):
+        mock_validator.return_value = None
+        mock_user = MagicMock()
+        mock_user.id = 1
+        mock_user.email = "test@example.com"
+        self.mock_repo.create_user.return_value = mock_user
+
+        data = {
+            "email": "test@example.com",
+            "first_name": "John",
+            "last_name": "Doe",
+            "password": "securepassword"
+        }
+
+        result = self.service.signup(data)
+
+        mock_validator.assert_called_once_with(data)
+        self.mock_repo.create_user.assert_called_once_with(
+            email="test@example.com",
+            first_name="John",
+            last_name="Doe",
+            password="securepassword"
+        )
+        self.assertEqual(result, {'id': 1, 'email': "test@example.com"})
+
+    @patch('apps.users.services.auth_services.validate_signup_data')
+    def test_signup_validation_error(self, mock_validator):
+        mock_validator.side_effect = ValidationError("Invalid data")
+        data = {
+            "email": "bademail",
+            "first_name": "",
+            "last_name": "",
+            "password": "pwd"
+        }
+
+        with self.assertRaises(ValidationError) as context:
+            self.service.signup(data)
+        self.assertEqual(str(context.exception), "['Invalid data']")
+        self.mock_repo.create_user.assert_not_called()
+
+    @patch('apps.users.services.auth_services.validate_signup_data')
+    def test_signup_repo_exception(self, mock_validator):
+        mock_validator.return_value = None
+        self.mock_repo.create_user.side_effect = Exception("DB error")
+        data = {
+            "email": "test@example.com",
+            "first_name": "John",
+            "last_name": "Doe",
+            "password": "securepassword"
+        }
+
+        with self.assertRaises(Exception) as context:
+            self.service.signup(data)
+        self.assertEqual(str(context.exception), "DB error")
+        self.mock_repo.create_user.assert_called_once()
