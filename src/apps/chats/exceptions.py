@@ -6,3 +6,9 @@ class MessageStorageError(Exception):
 
 class MessageRetrievalError(Exception):
     pass
+
+class ConversationNotFoundError(Exception):
+    pass
+
+class ConversationAccessDeniedError(Exception):
+    pass

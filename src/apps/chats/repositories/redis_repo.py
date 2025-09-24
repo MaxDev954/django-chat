@@ -5,7 +5,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 
 from apps.chats.exceptions import MessageStorageError, MessageRetrievalError
-from apps.chats.repositories.inter import IMessageRepo
+from apps.chats.repositories.inter import IMessageRepo, IConsumerRepo
 from apps.chats.validators import validate_message_required_field
 from loggers import get_redis_logger
 
@@ -14,11 +14,8 @@ MyUser = get_user_model()
 
 
 class RedisMessageRepo(IMessageRepo):
-    def __init__(self, url = None):
-        self.redis_client = redis.from_url(
-            url or settings.REDIS_URL,
-            decode_responses=True
-        )
+    def __init__(self, redis_client):
+        self.redis_client = redis_client
 
     def push_message(self, conv_id: str, message: Dict) -> None:
         try:
@@ -42,3 +39,31 @@ class RedisMessageRepo(IMessageRepo):
         except json.JSONDecodeError as e:
             logger.error(f"Message deserialization error: {e}")
             raise MessageRetrievalError(e)
+
+class RedisConsumerRepo(IConsumerRepo):
+    def __init__(self, redis_client: redis.Redis):
+        self.redis = redis_client
+
+    def add_to_set(self, key: str, value: str):
+        try:
+            self.redis.sadd(key, value)
+        except redis.RedisError as e:
+            message = f"Redis error adding to set: {e}"
+            logger.error(message)
+            raise MessageStorageError(message)
+
+    def remove_from_set(self, key: str, value: str):
+        try:
+            self.redis.srem(key, value)
+        except redis.RedisError as e:
+            message = f"Redis error removing from set: {e}"
+            logger.error(message)
+            raise MessageStorageError(message)
+
+    def get_set_members(self, key: str) -> List[str]:
+        try:
+            return [m.decode('utf-8') for m in self.redis.smembers(key)]
+        except redis.RedisError as e:
+            message = f"Redis error getting set members: {e}"
+            logger.error(message)
+            raise MessageRetrievalError(message)

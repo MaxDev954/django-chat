@@ -10,3 +10,16 @@ class IMessageRepo(ABC):
     @abstractmethod
     def get_messages(self, conv_id: str) -> list[Dict]:
         pass
+
+class IConsumerRepo(ABC):
+    @abstractmethod
+    def add_to_set(self, key: str, value: str):
+        pass
+
+    @abstractmethod
+    def remove_from_set(self, key: str, value: str):
+        pass
+
+    @abstractmethod
+    def get_set_members(self, key: str):
+        pass

@@ -4,7 +4,7 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from apps.chats.exceptions import MessageStorageError, MessageRetrievalError
 from apps.chats.models import Conversation, Message
-from apps.chats.repositories.inter import IMessageRepo
+from apps.chats.repositories.inter import IMessageRepo, IConsumerRepo
 from apps.chats.validators import validate_message_required_field
 from loggers import get_django_logger
 
