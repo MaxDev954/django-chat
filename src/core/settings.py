@@ -222,3 +222,6 @@ LOGGING = {
 }
 
 GRAVATAR_URL = "https://www.gravatar.com/avatar/"
+
+
+HOST = os.getenv('HOST')
