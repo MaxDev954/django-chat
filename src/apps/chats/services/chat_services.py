@@ -29,18 +29,15 @@ class ChatService:
         self.db_repo = db_repo
         self.redis_consumer_repo = redis_consumer_repo
 
-    def create_conversation(self, user_ids: list) -> str:
+    def create_conversation(self, title: str | None = None) -> str:
         try:
-            participants = self.user_repo.filter(id__in=user_ids)
-            if not participants:
-                raise ValidationError("No valid participants")
-            conv = self.conversation_repo.create()
-            conv.participants.add(*participants)
+            conv = self.conversation_repo.create(title=title)
             logger.info(f"Conversation created: {conv.id}")
             return str(conv.id)
         except Exception as e:
             logger.error(f"Error creating conversation: {e}")
             raise
+
 
     def join_conversation(self, conv_id: str, user_id: int):
         try:
@@ -134,7 +131,7 @@ class ChatService:
     def get_all_conversations(self) -> list:
         try:
             conversations = self.conversation_repo.all()
-            return [{'id': str(conv.id), 'name': f"Chat {conv.id}"} for conv in conversations]
+            return [{'id': str(conv.id), 'name': f"Chat {conv.get_title()}"} for conv in conversations]
         except Exception as e:
             logger.error(f"Error retrieving all conversations: {e}")
             raise e

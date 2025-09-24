@@ -15,6 +15,12 @@ def create_user_status_message(user: MyUser, status: Literal['joined' ,'left']) 
         'user': MyUserSerializer(user).data
     }
 
+def create_conversation_status_message(_id: str, status: Literal['joined' ,'left']) -> dict:
+    return {
+        'type': 'conversation_status',
+        'status': status,
+        'id': _id
+    }
 
 def get_cookie_from_scope(scope, name: str):
     cookie_header = dict(scope['headers']).get(b'cookie', b'').decode()
