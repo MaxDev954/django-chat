@@ -1,9 +1,12 @@
+from unittest import mock
 from unittest.mock import patch, MagicMock
 
 from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from apps.users.models import MyUser
 from apps.users.services.auth_services import AuthService
+from apps.users.services.gravatar_service import GravatarService
 
 
 class MyUserModelTest(TestCase):
@@ -140,3 +143,46 @@ class AuthServiceTest(TestCase):
             self.service.signup(data)
         self.assertEqual(str(context.exception), "DB error")
         self.mock_repo.create_user.assert_called_once()
+
+class MyUserAvatarTestCase(TestCase):
+
+    def test_avatar_field_accepts_valid_file(self):
+        user = MyUser.objects.create(
+            email="test@example.com",
+            first_name="Test",
+            last_name="User"
+        )
+
+        image_file = SimpleUploadedFile(
+            "avatar.png", b"file_content", content_type="image/png"
+        )
+        user.avatar = image_file
+        user.save()
+
+        user.refresh_from_db()
+        self.assertTrue(user.avatar.name.endswith(".png"))
+
+    def test_avatar_field_rejects_invalid_file_extension(self):
+        user = MyUser(
+            email="test2@example.com",
+            first_name="Test",
+            last_name="User"
+        )
+        invalid_file = SimpleUploadedFile(
+            "avatar.txt", b"file_content", content_type="text/plain"
+        )
+
+        user.avatar = invalid_file
+        with self.assertRaises(Exception):
+            user.full_clean()
+
+    @mock.patch.object(GravatarService, "save_gravatar_to_user_avatar")
+    def test_gravatar_service_called_on_user_creation(self, mock_save):
+        user = MyUser.objects.create(
+            email="gravatar@example.com",
+            first_name="Gravatar",
+            last_name="Test"
+        )
+
+        GravatarService().save_gravatar_to_user_avatar(user)
+        mock_save.assert_called_once_with(user)
