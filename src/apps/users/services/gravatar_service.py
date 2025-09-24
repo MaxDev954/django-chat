@@ -24,10 +24,10 @@ class GravatarService:
                 filename = f"{user.first_name}_{user.id}_avatar.jpg"
                 user.avatar.save(filename, ContentFile(img_content), save=True)
             else:
-                logger.error(f"Gravatar returned status {response.status_code} for user {user.username}")
+                logger.error(f"Gravatar returned status {response.status_code} for user {user.first_name}")
 
         except Exception as e:
             logger.error(
-                f"Failed to save Gravatar avatar for user {user.username}: {e}",
+                f"Failed to save Gravatar avatar for user {user.first_name}: {e}",
                 exc_info=True
             )
