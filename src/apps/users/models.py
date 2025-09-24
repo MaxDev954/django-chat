@@ -1,5 +1,9 @@
+from colorfield.fields import ColorField
 from django.contrib.auth.base_user import BaseUserManager, AbstractBaseUser
 from django.db import models
+
+from apps.users.utils import generate_random_color
+from apps.users.validators import validate_image_extension
 
 
 class MyUserManager(BaseUserManager):
@@ -45,6 +49,8 @@ class MyUser(AbstractBaseUser):
     last_name = models.CharField(verbose_name='Last name', max_length=255, blank=True, null=True)
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
+    color = ColorField(default=generate_random_color)
+    avatar = models.FileField(validators=[validate_image_extension], upload_to='images/avatars/', blank=True, null=True)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ['first_name', 'last_name']
