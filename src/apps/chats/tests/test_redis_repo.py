@@ -16,7 +16,7 @@ class RedisMessageRepoTests(TestCase):
         self.mock_from_url = patcher.start()
         self.mock_redis_client = MagicMock()
         self.mock_from_url.return_value = self.mock_redis_client
-        self.repo = RedisMessageRepo(url="redis://test")
+        self.repo = RedisMessageRepo(redis_client=self.mock_redis_client)
 
     def test_push_message_success(self):
         message = {"sender": "user1", "text": "Hello", "timestamp": datetime(2025, 1, 1, 12, 0).timestamp()}
