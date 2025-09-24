@@ -1,4 +1,5 @@
 from colorfield.fields import ColorField
+from django.conf import settings
 from django.contrib.auth.base_user import BaseUserManager, AbstractBaseUser
 from django.db import models
 
@@ -59,6 +60,12 @@ class MyUser(AbstractBaseUser):
 
     def __str__(self):
         return self.email
+
+    def get_avatar(self):
+        if self.avatar and settings.HOST:
+            return f'{settings.HOST}{self.avatar.url}'
+
+        return None
 
     def has_perm(self, perm, obj=None):
         "Does the user have a specific permission?"
