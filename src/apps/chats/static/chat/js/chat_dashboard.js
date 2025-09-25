@@ -35,6 +35,9 @@ socket.onmessage = function (event) {
         case 'message':
             addMessage(data);
             break;
+        case 'error_message':
+            showNotification(data.text)
+            break;
     }
 };
 
@@ -45,6 +48,27 @@ socket.onclose = function (event) {
 socket.onerror = function (error) {
     console.error('WebSocket error:', error);
 };
+
+function showNotification(message, type = 'error') {
+    const notifier = document.getElementById('notifier');
+    
+    notifier.className = 'notifier';
+    
+    if (type === 'error') {
+        notifier.classList.add('error');
+    } else if (type === 'success') {
+        notifier.classList.add('success');
+    }
+    
+    notifier.textContent = message;
+    
+    notifier.classList.add('show');
+    
+    setTimeout(() => {
+        notifier.classList.remove('show');
+    }, 3000);
+}
+
 
 function displayUsers() {
     const usersContainer = document.getElementById('users-container');
