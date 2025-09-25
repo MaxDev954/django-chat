@@ -18,3 +18,10 @@
   color: var(--primary);
   font-weight: normal;
 }
+
+#logout {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    max-width: 100px;
+}

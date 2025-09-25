@@ -1,4 +1,4 @@
-from django.contrib.auth import get_user_model, login
+from django.contrib.auth import get_user_model, login, logout
 from django.shortcuts import render, redirect
 from apps.users.forms import LoginForm, SignupForm
 from apps.users.services.auth_services import AuthService
@@ -28,7 +28,7 @@ def signup_view(request):
             try:
                 user_data = auth_service.signup(form.cleaned_data)
                 logger.info(f"User signed up: {user_data['email']}")
-                return redirect("login")
+                return redirect("select_room")
             except Exception as e:
                 logger.error(f"Signup error: {e}")
                 form.add_error(None, str(e))
@@ -36,3 +36,6 @@ def signup_view(request):
         form = SignupForm()
     return render(request, "users/register_form.html", {"form": form})
 
+def logout_view(request):
+    logout(request)
+    return redirect('login')
