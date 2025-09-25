@@ -6,6 +6,7 @@ const chatWsUrl = dashboard.dataset?.chatUrl || 'default';
 let socket = new WebSocket(chatWsUrl);
 let users = [];
 let currentUserId = hiddenInput.dataset.userId;
+let currentUser = undefined
 
 let messages = [];
 
@@ -25,6 +26,7 @@ socket.onmessage = function (event) {
 
         case 'user_list':
             users = data.users || [];
+            initCurrentUser(users)
             displayUsers();
             break;
 
@@ -118,8 +120,13 @@ function displayMessages() {
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
+function initCurrentUser(users){
+    currentUser = users.find(user => user.id === +currentUserId)
+}
+
 function createMessageElement(msg) {
-    const currentUser = msg.user
+    console.log(users)
+    console.log(currentUser)
     const isOwnMessage = msg?.sender === +currentUserId;
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${isOwnMessage ? 'own' : ''}`;
