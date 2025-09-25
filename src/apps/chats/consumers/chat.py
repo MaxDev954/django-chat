@@ -33,9 +33,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
             create_user_status_message(self.scope['user'], 'joined')
         )
 
-        await self.send_history()
         await self.add_users()
         await self.send_users()
+        await self.send_history()
 
 
     async def disconnect(self, close_code):
@@ -61,7 +61,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 'type': 'message',
                 'sender': sender_id,
                 'text': text,
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now().isoformat(),
+                'user': MyUserSerializer(self.scope['user']).data
             }
 
             await database_sync_to_async(chat_service.send_message)(
@@ -118,11 +119,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def add_users(self):
         try:
             await database_sync_to_async(chat_service.add_active_user)(self.conv_id, self.scope['user'].id)
-        except:
+        except Exception as e:
             await self.send(text_data=json.dumps({'error': f'Error adding users: {str(e)}'}))
 
     async def remove_user(self):
         try:
             await database_sync_to_async(chat_service.remove_active_user)(self.conv_id, self.scope['user'].id)
-        except:
+        except Exception as e:
             await self.send(text_data=json.dumps({'error': f'Error removing users: {str(e)}'}))

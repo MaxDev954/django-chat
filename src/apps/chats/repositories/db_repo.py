@@ -6,6 +6,7 @@ from apps.chats.exceptions import MessageStorageError, MessageRetrievalError
 from apps.chats.models import Conversation, Message
 from apps.chats.repositories.inter import IMessageRepo, IConsumerRepo
 from apps.chats.validators import validate_message_required_field
+from apps.users.serializers import MyUserSerializer
 from loggers import get_django_logger
 
 logger = get_django_logger()
@@ -35,11 +36,12 @@ class DatabaseMessageRepo(IMessageRepo):
 
     def get_messages(self, conv_id: str) -> List[Dict]:
         try:
-            messages = Message.objects.filter(conversation__id=conv_id).order_by('timestamp')
+            messages = Message.objects.filter(conversation__id=conv_id).select_related('sender').order_by('timestamp')
             return [
                 {
                     'sender': m.sender.id,
                     'text': m.text,
+                    'user': MyUserSerializer(m.sender).data,
                     'timestamp': m.timestamp.isoformat()
                 } for m in messages
             ]
