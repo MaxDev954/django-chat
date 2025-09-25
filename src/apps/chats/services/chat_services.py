@@ -1,16 +1,16 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
-from django.db.models import Manager
-
 from django.db.models.manager import Manager
+from django.utils.dateparse import parse_datetime
 
 from apps.chats.models import Conversation
 from apps.chats.repositories.inter import IMessageRepo, IConsumerRepo
 from apps.chats.exceptions import MessageValidationError, MessageStorageError, MessageRetrievalError, \
-    ConversationNotFoundError
+    ConversationNotFoundError, TooManyMessageException
+from apps.chats.utils import parse_iso_aware
 
 logger = logging.getLogger(__name__)
 MyUser = get_user_model()
@@ -78,7 +78,7 @@ class ChatService:
             message = {
                 'sender': sender_id,
                 'text': text,
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
             self.redis_repo.push_message(conv_id, message)
             self.db_repo.push_message(conv_id, message)
@@ -174,3 +174,38 @@ class ChatService:
             logger.error(f"Error getting active users: {e}")
             raise e
 
+    def check_throttling_message(self, per_second: int, per_minute: int, user_id: int,
+                                 conv_id: str) -> Exception | None:
+        try:
+            now = datetime.now(timezone.utc)
+            messages = self.redis_repo.get_messages_by_user_id(conv_id, user_id)
+
+            if messages:
+                last_message = messages[-1]
+                last_message_timestamp = last_message.get("timestamp")
+                print(f'{last_message_timestamp=}')
+
+                if last_message_timestamp is not None:
+                    last_dt = parse_iso_aware(last_message_timestamp)
+                    print(f'{last_dt=}')
+                    print(f'{last_dt.tzinfo=}')
+
+                    print(f'{(now - last_dt).total_seconds() < per_second=}')
+
+                    if (now - last_dt).total_seconds() < per_second:
+                        print('Too many messages per second')
+                        raise TooManyMessageException("Too many messages per second")
+
+                    one_minute_ago = now - timedelta(minutes=1)
+                    recent_messages = [m for m in messages if parse_iso_aware(m["timestamp"]) > one_minute_ago]
+
+                    if len(recent_messages) > per_minute:
+                        raise TooManyMessageException("Too many messages per minute")
+
+            return None
+
+        except TooManyMessageException as e:
+            raise e
+        except Exception as e:
+            print(str(e))
+            logger.error(e)

@@ -40,6 +40,17 @@ class RedisMessageRepo(IMessageRepo):
             logger.error(f"Message deserialization error: {e}")
             raise MessageRetrievalError(e)
 
+    def get_messages_by_user_id(self,conv_id: str, user_id: int) -> list[Dict]:
+        try:
+            messages = self.redis_client.lrange(f"chat:{conv_id}", 0, -1)
+            return [json.loads(m) for m in messages]
+        except redis.RedisError as e:
+            logger.error(f"Error receiving messages from Redis: {e}")
+            raise MessageRetrievalError(e)
+        except json.JSONDecodeError as e:
+            logger.error(f"Message deserialization error: {e}")
+            raise MessageRetrievalError(e)
+
 class RedisConsumerRepo(IConsumerRepo):
     def __init__(self, redis_client: redis.Redis):
         self.redis = redis_client

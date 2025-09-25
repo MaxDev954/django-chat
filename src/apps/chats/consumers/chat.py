@@ -1,11 +1,11 @@
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 
 from apps.chats.consumers.config import chat_service
-from apps.chats.exceptions import ConversationNotFoundError
+from apps.chats.exceptions import ConversationNotFoundError, TooManyMessageException
 from apps.chats.utils import create_user_status_message
 from apps.users.serializers import MyUserSerializer
 
@@ -56,12 +56,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 await self.send(text_data=json.dumps({'error': 'Message text is required'}))
                 return
 
+            chat_service.check_throttling_message(1,10, self.scope['user'], self.conv_id)
+
             sender_id = self.scope['user'].id
             message = {
                 'type': 'message',
                 'sender': sender_id,
                 'text': text,
-                'timestamp': datetime.now().isoformat(),
+                'timestamp': datetime.now(timezone.utc).isoformat(),
                 'user': MyUserSerializer(self.scope['user']).data
             }
 
@@ -80,6 +82,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
             )
         except json.JSONDecodeError:
             await self.send(text_data=json.dumps({'error': 'Invalid JSON format'}))
+        except TooManyMessageException as e:
+            print('EXCEPTION')
+            await self.send(text_data=json.dumps({'type': 'error_message', 'text': str(e)}))
         except Exception as e:
             await self.send(text_data=json.dumps({'error': f'Error processing message: {str(e)}'}))
 

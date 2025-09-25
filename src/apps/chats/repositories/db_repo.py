@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Dict, List
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
@@ -45,6 +46,22 @@ class DatabaseMessageRepo(IMessageRepo):
                     'timestamp': m.timestamp.isoformat()
                 } for m in messages
             ]
+        except Exception as e:
+            logger.error(f"Error retrieving from database: {e}")
+            raise MessageRetrievalError(e)
+
+    def get_messages_by_user_id(self, conv_id: str,  user_id: int) -> list[Dict]:
+        try:
+            messages = Message.objects.filter(id=conv_id,user_id=user_id)
+            return [
+                {
+                    'sender': m.sender.id,
+                    'text': m.text,
+                    'user': MyUserSerializer(m.sender).data,
+                    'timestamp': m.timestamp.isoformat()
+                } for m in messages
+            ]
+
         except Exception as e:
             logger.error(f"Error retrieving from database: {e}")
             raise MessageRetrievalError(e)

@@ -12,3 +12,6 @@ class ConversationNotFoundError(Exception):
 
 class ConversationAccessDeniedError(Exception):
     pass
+
+class TooManyMessageException(Exception):
+    pass
