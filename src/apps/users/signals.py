@@ -4,16 +4,16 @@ from apps.users.models import MyUser
 from apps.users.services.gravatar_service import GravatarService
 from loggers import get_django_logger
 
-logger = get_django_logger()
-
-@receiver(post_save, sender=MyUser)
-def create_user_avatar(sender, instance, created, **kwargs):
-    if created and not instance.avatar:
-        try:
-            GravatarService().save_gravatar_to_user_avatar(instance)
-            logger.info(f"Avatar successfully generated for user {instance.first_name}")
-        except Exception as e:
-            logger.error(
-                f"Failed to generate avatar for user {instance.first_name}: {e}",
-                exc_info=True
-            )
+# logger = get_django_logger()
+#
+# @receiver(post_save, sender=MyUser)
+# def create_user_avatar(sender, instance, created, **kwargs):
+#     if created and not instance.avatar:
+#         try:
+#             GravatarService().save_gravatar_to_user_avatar(instance)
+#             logger.info(f"Avatar successfully generated for user {instance.first_name}")
+#         except Exception as e:
+#             logger.error(
+#                 f"Failed to generate avatar for user {instance.first_name}: {e}",
+#                 exc_info=True
+#             )
