@@ -1,13 +1,13 @@
 import json
 from datetime import datetime, timezone, timedelta
 from unittest import mock
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 
-from apps.chats.exceptions import TooManyMessageException
+from apps.chats.exceptions import TooManyMessageException, MessageStorageError, MessageRetrievalError
 from apps.chats.models import Conversation
 from apps.chats.repositories import DatabaseMessageRepo
 from apps.chats.repositories.inter import IMessageRepo, IConsumerRepo
@@ -147,3 +147,92 @@ class ThrottlingTests(TestCase):
 
         result = self.chat_service.check_throttling_message(per_second=1, per_minute=5, user_id=1, conv_id="conv1")
         self.assertIsNone(result)
+
+
+class TestCleanupConversationIfEmpty(TestCase):
+
+    def setUp(self):
+        self.user_repo_mock = MagicMock()
+        self.conversation_repo_mock = MagicMock()
+        self.redis_repo_mock = MagicMock()
+        self.db_repo_mock = MagicMock()
+        self.redis_consumer_repo_mock = MagicMock()
+
+        self.chat_service = ChatService(
+            user_repo=self.user_repo_mock,
+            conversation_repo=self.conversation_repo_mock,
+            redis_repo=self.redis_repo_mock,
+            db_repo=self.db_repo_mock,
+            redis_consumer_repo=self.redis_consumer_repo_mock
+        )
+
+        self.conv_id = "test-conversation-123"
+
+    def test_cleanup_conversation_if_empty_success(self):
+        self.redis_consumer_repo_mock.get_set_members.return_value = []
+
+        self.chat_service.cleanup_conversation_if_empty(self.conv_id)
+
+        self.redis_consumer_repo_mock.get_set_members.assert_called_once_with(f'active_users:{self.conv_id}')
+        self.redis_repo_mock.clear_messages.assert_called_once_with(self.conv_id)
+        self.redis_consumer_repo_mock.delete_set.assert_called_once_with(f'active_users:{self.conv_id}')
+
+    def test_cleanup_conversation_with_active_users(self):
+        self.redis_consumer_repo_mock.get_set_members.return_value = ['1', '2']
+
+        self.chat_service.cleanup_conversation_if_empty(self.conv_id)
+
+        self.redis_consumer_repo_mock.get_set_members.assert_called_once_with(f'active_users:{self.conv_id}')
+        self.redis_repo_mock.clear_messages.assert_not_called()
+        self.redis_consumer_repo_mock.delete_set.assert_not_called()
+
+    @patch('apps.chats.services.chat_services.logger')
+    def test_cleanup_conversation_redis_error_on_get_active_users(self, mock_logger):
+        self.redis_consumer_repo_mock.get_set_members.side_effect = MessageRetrievalError("Redis connection failed")
+
+        self.chat_service.cleanup_conversation_if_empty(self.conv_id)
+
+        self.assertEqual(mock_logger.error.call_count, 2)
+        self.redis_repo_mock.clear_messages.assert_not_called()
+        self.redis_consumer_repo_mock.delete_set.assert_not_called()
+
+    @patch('apps.chats.services.chat_services.logger')
+    def test_cleanup_conversation_redis_error_on_clear_messages(self, mock_logger):
+        self.redis_consumer_repo_mock.get_set_members.return_value = []
+        self.redis_repo_mock.clear_messages.side_effect = MessageStorageError("Failed to clear messages")
+
+        self.chat_service.cleanup_conversation_if_empty(self.conv_id)
+
+        self.redis_consumer_repo_mock.get_set_members.assert_called_once()
+        self.redis_repo_mock.clear_messages.assert_called_once_with(self.conv_id)
+        mock_logger.error.assert_called_once()
+        self.redis_consumer_repo_mock.delete_set.assert_not_called()
+
+    @patch('apps.chats.services.chat_services.logger')
+    def test_cleanup_conversation_redis_error_on_delete_set(self, mock_logger):
+        self.redis_consumer_repo_mock.get_set_members.return_value = []
+        self.redis_consumer_repo_mock.delete_set.side_effect = MessageStorageError("Failed to delete set")
+
+        self.chat_service.cleanup_conversation_if_empty(self.conv_id)
+
+        self.redis_consumer_repo_mock.get_set_members.assert_called_once()
+        self.redis_repo_mock.clear_messages.assert_called_once_with(self.conv_id)
+        self.redis_consumer_repo_mock.delete_set.assert_called_once_with(f'active_users:{self.conv_id}')
+        mock_logger.error.assert_called_once()
+
+
+    def test_cleanup_conversation_empty_string_conv_id(self):
+        self.redis_consumer_repo_mock.get_set_members.return_value = []
+        empty_conv_id = ""
+
+        self.chat_service.cleanup_conversation_if_empty(empty_conv_id)
+
+        self.redis_consumer_repo_mock.get_set_members.assert_called_once_with('active_users:')
+
+    def test_cleanup_conversation_none_conv_id(self):
+        self.redis_consumer_repo_mock.get_set_members.return_value = []
+
+        self.chat_service.cleanup_conversation_if_empty(None)
+
+        self.redis_consumer_repo_mock.get_set_members.assert_called_once_with('active_users:None')
+
