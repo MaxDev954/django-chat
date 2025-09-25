@@ -1,0 +1,20 @@
+#chat-select {
+  width: 100%;
+  padding: 12px 15px;
+  border: 2px solid var(--primary);
+  background-color: var(--secondary);
+  font-size: 16px;
+  outline: none;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+#chat-select:focus {
+  box-shadow: 4px 4px 0px var(--primary);
+}
+
+#chat-select option {
+  background-color: var(--secondary);
+  color: var(--primary);
+  font-weight: normal;
+}

@@ -1,0 +1,42 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'users/css/login_form.css' %}">
+    <link rel="stylesheet" href="{% static 'chat/css/chat_create_or_select.css' %}">
+    <title>Login</title>
+</head>
+<body>
+    <div class="login-container">
+        <h1>CREATE OR SELECT ROOM</h1>
+        <form method="post" id="room" action="{% url 'select_room' %}">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+            <div class="input-group">
+                {{ form.room.label_tag }}
+                {{ form.room }}
+                {{ form.room.errors }}
+            </div>
+          <button type="submit">CREATE</button>
+        </form>
+        <div class="divider">OR</div>
+        <div class="login-container">
+          <div class="input-group">
+            <label for="chat-select">CHATS:</label>
+            <select id="chat-select">
+              <option value="">LOADING...</option>
+            </select>
+           <a class="button" id="join">JOIN</a>
+          </div>
+        </div>
+    </div>
+
+    <input type="hidden" id="conversation" data-conversation-url="{{ws_conversation_url}}">
+
+    <script src="{% static 'chat/js/select_join.js' %}"></script>
+    <script src="{% static 'chat/js/ws_conversation.js' %}"></script>
+
+</body>
+</html>

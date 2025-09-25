@@ -1,0 +1,49 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'users/css/login_form.css' %}">
+    <title>Sign Up</title>
+</head>
+<body>
+    <div class="login-container">
+        <h1>SIGNUP</h1>
+        <form method="post" id="signup-form">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+            <div class="input-group">
+                {{ form.first_name.label_tag }}
+                {{ form.first_name }}
+                {{ form.first_name.errors }}
+            </div>
+            <div class="input-group">
+                {{ form.last_name.label_tag }}
+                {{ form.last_name }}
+                {{ form.last_name.errors }}
+            </div>
+            <div class="input-group">
+                {{ form.email.label_tag }}
+                {{ form.email }}
+                {{ form.email.errors }}
+            </div>
+            <div class="input-group">
+                {{ form.password.label_tag }}
+                {{ form.password }}
+                {{ form.password.errors }}
+            </div>
+            <div class="input-group">
+                {{ form.password2.label_tag }}
+                {{ form.password2 }}
+                {{ form.password2.errors }}
+            </div>
+            <button type="submit">SIGN UP</button>
+        </form>
+        <div class="footer">
+            Have an account? <a href="{% url 'login' %}">Sign in</a>
+        </div>
+    </div>
+    <script src="{% static 'users/js/form_validation.js' %}"></script>
+</body>
+</html>

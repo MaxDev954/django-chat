@@ -1,0 +1,42 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Dashboard</title>
+    <link rel="stylesheet" href="{% static 'chat/css/chat_dashboard.css' %}">
+</head>
+<body>
+    <div class="dashboard" id="chat-dashboard" data-chat-url="{{ws_chat_url}}">
+        <div class="sidebar">
+            <a class="button" href="{{chat_select_url}}">Back</a>
+            <h2>Users</h2>
+            <div class="users-container" id="users-container">
+            </div>
+        </div>
+
+        <div class="chat-area">
+            <div class="chat-header">
+                <div class="user-avatar" id="chat-avatar">Chat</div>
+                <h3 id="chat-name">{{chat_name}}</h3>
+            </div>
+
+            <div class="messages" id="messages">
+            </div>
+
+            <div class="input-area">
+                <div class="input-wrapper">
+                    <textarea class="message-input" id="messageInput" placeholder="Enter message..." maxlength="255"></textarea>
+                    <div class="char-counter" id="charCounter">0/255</div>
+                </div>
+                <button class="send-button" onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="notifier" id="notifier"></div>
+    <input type="hidden" id='user-id' data-user-id="{{user_id}}" />
+    <script src="{% static 'chat/js/chat_dashboard.js' %}"></script>
+</body>
+</html>

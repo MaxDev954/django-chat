@@ -33,6 +33,7 @@ def get_cookie_from_scope(scope, name: str):
         return cookie[name].value
     return None
 
+
 def parse_iso_aware(ts: str) -> datetime:
     dt = datetime.fromisoformat(ts)
     if dt.tzinfo is None:

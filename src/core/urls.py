@@ -21,10 +21,16 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+
+    path('auth/', include('apps.users.urls')),
+    path('chat/', include('apps.chats.urls')),
+
     path('api/', include([
-        path('conversation/', include('apps.chats.urls'))
+        path('conversation/', include('apps.chats.api_urls')),
     ]))
 ]
+
+handler404 = 'core.views.custom_404'
 
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
