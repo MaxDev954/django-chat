@@ -1,3 +1,4 @@
+import asyncio
 import json
 from datetime import datetime, timezone
 
@@ -14,6 +15,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.conv_id = self.scope['url_route']['kwargs']['conv_id']
         self.conv_group_name = f'chat_{self.conv_id}'
+        self.user_id = self.scope['user'].id
 
         try:
             await self.check_conversation_exists()
@@ -57,9 +59,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 await self.send(text_data=json.dumps({'error': 'Message text is required'}))
                 return
 
-            chat_service.check_throttling_message(1,10, self.scope['user'].id, self.conv_id)
+            chat_service.check_throttling_message(1,10, self.user_id, self.conv_id)
 
-            sender_id = self.scope['user'].id
+            sender_id = self.user_id
             message = {
                 'type': 'message',
                 'sender': sender_id,
@@ -123,12 +125,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def add_users(self):
         try:
-            await database_sync_to_async(chat_service.add_active_user)(self.conv_id, self.scope['user'].id)
+            await database_sync_to_async(chat_service.add_active_user)(self.conv_id, self.user_id)
         except Exception as e:
             await self.send(text_data=json.dumps({'error': f'Error adding users: {str(e)}'}))
 
     async def remove_user(self):
         try:
-            await database_sync_to_async(chat_service.remove_active_user)(self.conv_id, self.scope['user'].id)
+            await database_sync_to_async(chat_service.remove_active_user)(self.conv_id, self.user_id)
         except Exception as e:
             await self.send(text_data=json.dumps({'error': f'Error removing users: {str(e)}'}))
