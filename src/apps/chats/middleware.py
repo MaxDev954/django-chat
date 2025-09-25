@@ -22,7 +22,7 @@ class AuthRequiredMiddleware(BaseMiddleware):
 
     async def __call__(self, scope, receive, send):
         print(scope)
-        session_key = get_cookie_from_scope(scope, 'sessionid') or "6hvlgeqkk881imx2cx2swn8x1ivseadt"
+        session_key = get_cookie_from_scope(scope, 'sessionid')
         if session_key:
             user = await self.get_user_from_session(session_key)
             scope["user"] = user
