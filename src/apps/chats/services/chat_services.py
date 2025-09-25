@@ -209,3 +209,14 @@ class ChatService:
         except Exception as e:
             print(str(e))
             logger.error(e)
+
+    def cleanup_conversation_if_empty(self, conv_id: str):
+        try:
+            active_users = self.get_active_user_ids(conv_id)
+            if not active_users:
+                self.redis_repo.clear_messages(conv_id)
+                key = f'active_users:{conv_id}'
+                self.redis_consumer_repo.delete_set(key)
+                logger.info(f"Cleaned up Redis cache for empty conversation {conv_id}")
+        except Exception as e:
+            logger.error(f"Error during cleanup: {e}")

@@ -15,6 +15,11 @@ class IMessageRepo(ABC):
     def get_messages_by_user_id(self, conv_id:str,  user_id:int|str) -> list[Dict]:
         pass
 
+class IMessageClearRepo(IMessageRepo, ABC):
+    @abstractmethod
+    def clear_messages(self, conv_id: str):
+        pass
+
 class IConsumerRepo(ABC):
     @abstractmethod
     def add_to_set(self, key: str, value: str):
@@ -26,4 +31,8 @@ class IConsumerRepo(ABC):
 
     @abstractmethod
     def get_set_members(self, key: str):
+        pass
+
+    @abstractmethod
+    def delete_set(self, key:str):
         pass

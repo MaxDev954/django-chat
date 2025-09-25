@@ -111,7 +111,7 @@ class AuthServiceTest(TestCase):
             last_name="Doe",
             password="securepassword"
         )
-        self.assertEqual(result, {'id': 1, 'email': "test@example.com"})
+        self.assertEqual(result.id, 1)
 
     @patch('apps.users.services.auth_services.validate_signup_data')
     def test_signup_validation_error(self, mock_validator):

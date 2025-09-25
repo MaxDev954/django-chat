@@ -46,6 +46,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             )
             await self.channel_layer.group_discard(self.conv_group_name, self.channel_name)
             await self.remove_user()
+            await database_sync_to_async(chat_service.cleanup_conversation_if_empty)(self.conv_id)
 
     async def receive(self, text_data):
         try:
@@ -56,7 +57,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 await self.send(text_data=json.dumps({'error': 'Message text is required'}))
                 return
 
-            chat_service.check_throttling_message(1,10, self.scope['user'], self.conv_id)
+            chat_service.check_throttling_message(1,10, self.scope['user'].id, self.conv_id)
 
             sender_id = self.scope['user'].id
             message = {
@@ -83,7 +84,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         except json.JSONDecodeError:
             await self.send(text_data=json.dumps({'error': 'Invalid JSON format'}))
         except TooManyMessageException as e:
-            print('EXCEPTION')
             await self.send(text_data=json.dumps({'type': 'error_message', 'text': str(e)}))
         except Exception as e:
             await self.send(text_data=json.dumps({'error': f'Error processing message: {str(e)}'}))
@@ -106,9 +106,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def send_history(self):
         try:
-            # messages = await database_sync_to_async(chat_service.get_messages_from_redis)(self.conv_id)
-            # if not messages:
-            messages = await database_sync_to_async(chat_service.get_messages_from_db)(self.conv_id)
+            messages = await database_sync_to_async(chat_service.get_messages_from_redis)(self.conv_id)
+            if not messages:
+                messages = await database_sync_to_async(chat_service.get_messages_from_db)(self.conv_id)
             await self.send(text_data=json.dumps({'type': 'history', 'messages': messages}))
         except Exception as e:
             await self.send(text_data=json.dumps({'error': f'Error retrieving history: {str(e)}'}))

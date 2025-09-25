@@ -5,7 +5,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 
 from apps.chats.exceptions import MessageStorageError, MessageRetrievalError
-from apps.chats.repositories.inter import IMessageRepo, IConsumerRepo
+from apps.chats.repositories.inter import IMessageRepo, IConsumerRepo, IMessageClearRepo
 from apps.chats.validators import validate_message_required_field
 from loggers import get_redis_logger
 
@@ -13,7 +13,7 @@ logger = get_redis_logger()
 MyUser = get_user_model()
 
 
-class RedisMessageRepo(IMessageRepo):
+class RedisMessageRepo(IMessageClearRepo):
     def __init__(self, redis_client):
         self.redis_client = redis_client
 
@@ -56,6 +56,23 @@ class RedisMessageRepo(IMessageRepo):
             logger.error(f"Message deserialization error: {e}")
             raise MessageRetrievalError(e)
 
+    def clear_messages(self, conv_id: str):
+        try:
+            key = f"chat:{conv_id}"
+            deleted_count = self.redis_client.delete(key)
+
+            if deleted_count:
+                logger.info(f"Cleared messages from Redis for conversation {conv_id}")
+            else:
+                logger.info(f"No messages found in Redis for conversation {conv_id}")
+
+        except redis.RedisError as e:
+            logger.error(f"Error clearing messages from Redis for conversation {conv_id}: {e}")
+            raise MessageStorageError(f"Failed to clear Redis messages: {e}")
+        except Exception as e:
+            logger.error(f"Unexpected error clearing messages from Redis: {e}")
+            raise MessageStorageError(f"Failed to clear Redis messages: {e}")
+
 class RedisConsumerRepo(IConsumerRepo):
     def __init__(self, redis_client: redis.Redis):
         self.redis = redis_client
@@ -83,3 +100,17 @@ class RedisConsumerRepo(IConsumerRepo):
             message = f"Redis error getting set members: {e}"
             logger.error(message)
             raise MessageRetrievalError(message)
+
+    def delete_set(self, key: str):
+        try:
+            set_size = self.redis.scard(key)
+            if set_size == 0:
+                deleted_count = self.redis.delete(key)
+                if deleted_count:
+                    logger.info(f"Deleted empty set '{key}'")
+            else:
+                logger.info(f"Set '{key}' not deleted - contains {set_size} members")
+        except redis.RedisError as e:
+            message = f"Redis error deleting set '{key}': {e}"
+            logger.error(message)
+            raise MessageStorageError(message)
