@@ -1,11 +1,11 @@
 import json
-from datetime import datetime
-from time import timezone
+import uuid
+from datetime import datetime, timedelta, timezone
 
 import redis
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
-from apps.chats.exceptions import MessageStorageError, MessageRetrievalError
+from apps.chats.exceptions import MessageStorageError, MessageRetrievalError, TooManyMessageException
 from apps.chats.repositories import RedisMessageRepo
 
 
@@ -55,3 +55,30 @@ class RedisMessageRepoTests(TestCase):
         self.mock_redis_client.lrange.return_value = ["not json"]
         with self.assertRaises(MessageRetrievalError):
             self.repo.get_messages("conv1")
+
+
+class RedisMessageUserByIdRepoTests(TestCase):
+    def setUp(self):
+        self.mock_client = MagicMock()
+        self.repo = RedisMessageRepo(redis_client=self.mock_client)
+
+    def test_get_messages_by_user_id_success(self):
+        messages = [
+            json.dumps({"sender": "1", "text": "hi", "timestamp": "2025-09-25T12:00:00Z"}),
+            json.dumps({"sender": "2", "text": "hello", "timestamp": "2025-09-25T12:01:00Z"}),
+        ]
+        self.repo.redis_client.lrange.return_value = messages
+        result = self.repo.get_messages_by_user_id(str(uuid.uuid4()), 1)
+        print(result)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]["text"], "hi")
+
+    def test_get_messages_by_user_id_redis_error(self):
+        self.repo.redis_client.lrange.side_effect = redis.RedisError("fail")
+        with self.assertRaises(MessageRetrievalError):
+            self.repo.get_messages_by_user_id(str(uuid.uuid4()), 1)
+
+    def test_get_messages_by_user_id_json_error(self):
+        self.repo.redis_client.lrange.return_value = ["not json"]
+        with self.assertRaises(MessageRetrievalError):
+            self.repo.get_messages_by_user_id(str(uuid.uuid4()), 1)

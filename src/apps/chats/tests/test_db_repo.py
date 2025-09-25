@@ -1,9 +1,9 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from apps.chats.models import Conversation, Message
-from apps.chats.repositories import DatabaseMessageRepo
+from apps.chats.repositories import DatabaseMessageRepo, RedisMessageRepo
 from apps.chats.exceptions import MessageStorageError, MessageRetrievalError
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from datetime import datetime
 
 MyUser = get_user_model()
@@ -14,6 +14,7 @@ class DatabaseMessageRepoTests(TestCase):
         self.user = MyUser.objects.create_user(first_name="user1", last_name='user1', email='example@gmail.com', password="pass")
         self.conversation = Conversation.objects.create()
         self.conversation.participants.add(self.user)
+        self.repo.client = MagicMock()
 
     def test_push_message_success(self):
         message = {
@@ -66,3 +67,4 @@ class DatabaseMessageRepoTests(TestCase):
         mock_filter.side_effect = Exception("DB error")
         with self.assertRaises(MessageRetrievalError):
             self.repo.get_messages(str(self.conversation.id))
+

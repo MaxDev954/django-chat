@@ -52,7 +52,7 @@ class DatabaseMessageRepo(IMessageRepo):
 
     def get_messages_by_user_id(self, conv_id: str,  user_id: int) -> list[Dict]:
         try:
-            messages = Message.objects.filter(id=conv_id,user_id=user_id)
+            messages = Message.objects.filter(conversation__id=conv_id,sender_id=user_id)
             return [
                 {
                     'sender': m.sender.id,

@@ -42,8 +42,13 @@ class RedisMessageRepo(IMessageRepo):
 
     def get_messages_by_user_id(self,conv_id: str, user_id: int) -> list[Dict]:
         try:
-            messages = self.redis_client.lrange(f"chat:{conv_id}", 0, -1)
-            return [json.loads(m) for m in messages]
+            raw_messages = self.redis_client.lrange(f"chat:{conv_id}", 0, -1)
+            messages = [json.loads(m) for m in raw_messages]
+
+            if messages:
+                return [m for m in messages if int(m.get("sender")) == user_id]
+
+            return []
         except redis.RedisError as e:
             logger.error(f"Error receiving messages from Redis: {e}")
             raise MessageRetrievalError(e)

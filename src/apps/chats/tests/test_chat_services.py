@@ -1,10 +1,13 @@
 import json
+from datetime import datetime, timezone, timedelta
 from unittest import mock
+from unittest.mock import MagicMock
 
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 
+from apps.chats.exceptions import TooManyMessageException
 from apps.chats.models import Conversation
 from apps.chats.repositories import DatabaseMessageRepo
 from apps.chats.repositories.inter import IMessageRepo, IConsumerRepo
@@ -96,3 +99,51 @@ class ChatServiceTestCase(TestCase):
         with self.assertRaises(Exception):
             self.service.conversation_exists('9999')
 
+
+class ThrottlingTests(TestCase):
+    def setUp(self):
+        self.chat_service = ChatService(
+            user_repo=MagicMock(),
+            conversation_repo=MagicMock(),
+            redis_repo=MagicMock(),
+            db_repo=MagicMock(),
+            redis_consumer_repo=MagicMock(),
+        )
+        self.chat_service.redis_repo = MagicMock()
+
+    def test_no_messages(self):
+        self.chat_service.redis_repo.get_messages_by_user_id.return_value = []
+        result = self.chat_service.check_throttling_message(1, 5, 1, "conv1")
+        self.assertIsNone(result)
+
+    def test_per_second_limit_exceeded(self):
+        now = datetime.now(timezone.utc)
+        last_message = {"sender": 1, "text": "hi", "timestamp": now.isoformat()}
+        self.chat_service.redis_repo.get_messages_by_user_id.return_value = [last_message]
+
+        with self.assertRaises(TooManyMessageException) as cm:
+            self.chat_service.check_throttling_message(per_second=10, per_minute=5, user_id=1, conv_id="conv1")
+        self.assertIn("Too many messages per second", str(cm.exception))
+
+    def test_per_minute_limit_exceeded(self):
+        now = datetime.now(timezone.utc)
+        messages = [
+            {"sender": 1, "text": f"msg{i}", "timestamp": (now - timedelta(seconds=i*5)).isoformat()}
+            for i in range(6)
+        ]
+        self.chat_service.redis_repo.get_messages_by_user_id.return_value = messages
+
+        with self.assertRaises(TooManyMessageException) as cm:
+            self.chat_service.check_throttling_message(per_second=1, per_minute=5, user_id=1, conv_id="conv1")
+        self.assertIn("Too many messages per minute", str(cm.exception))
+
+    def test_okay_messages(self):
+        now = datetime.now(timezone.utc)
+        messages = [
+            {"sender": 1, "text": "hi", "timestamp": (now - timedelta(seconds=20)).isoformat()},
+            {"sender": 1, "text": "hello", "timestamp": (now - timedelta(seconds=15)).isoformat()},
+        ]
+        self.chat_service.redis_repo.get_messages_by_user_id.return_value = messages
+
+        result = self.chat_service.check_throttling_message(per_second=1, per_minute=5, user_id=1, conv_id="conv1")
+        self.assertIsNone(result)
