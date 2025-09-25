@@ -21,7 +21,6 @@ class AuthRequiredMiddleware(BaseMiddleware):
         return AnonymousUser()
 
     async def __call__(self, scope, receive, send):
-        print(scope)
         session_key = get_cookie_from_scope(scope, 'sessionid')
         if session_key:
             user = await self.get_user_from_session(session_key)

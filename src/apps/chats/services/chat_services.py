@@ -183,17 +183,11 @@ class ChatService:
             if messages:
                 last_message = messages[-1]
                 last_message_timestamp = last_message.get("timestamp")
-                print(f'{last_message_timestamp=}')
 
                 if last_message_timestamp is not None:
                     last_dt = parse_iso_aware(last_message_timestamp)
-                    print(f'{last_dt=}')
-                    print(f'{last_dt.tzinfo=}')
-
-                    print(f'{(now - last_dt).total_seconds() < per_second=}')
 
                     if (now - last_dt).total_seconds() < per_second:
-                        print('Too many messages per second')
                         raise TooManyMessageException("Too many messages per second")
 
                     one_minute_ago = now - timedelta(minutes=1)
@@ -207,7 +201,6 @@ class ChatService:
         except TooManyMessageException as e:
             raise e
         except Exception as e:
-            print(str(e))
             logger.error(e)
 
     def cleanup_conversation_if_empty(self, conv_id: str):

@@ -24,7 +24,7 @@ class RedisMessageRepoTests(TestCase):
         self.mock_redis_client.rpush.assert_called_once_with("chat:conv1", json.dumps(message))
 
     def test_push_message_validation_error(self):
-        invalid_message = {"sender": "user1", "text": "Hello"}  # немає timestamp
+        invalid_message = {"sender": "user1", "text": "Hello"}
         with self.assertRaises(ValueError):
             self.repo.push_message("conv1", invalid_message)
 
@@ -69,7 +69,6 @@ class RedisMessageUserByIdRepoTests(TestCase):
         ]
         self.repo.redis_client.lrange.return_value = messages
         result = self.repo.get_messages_by_user_id(str(uuid.uuid4()), 1)
-        print(result)
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0]["text"], "hi")
 
