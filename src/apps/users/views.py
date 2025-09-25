@@ -26,8 +26,9 @@ def signup_view(request):
         form = SignupForm(request.POST)
         if form.is_valid():
             try:
-                user_data = auth_service.signup(form.cleaned_data)
-                logger.info(f"User signed up: {user_data['email']}")
+                user = auth_service.signup(form.cleaned_data)
+                login(request, user)
+                logger.info(f"User signed up: {user.email}")
                 return redirect("select_room")
             except Exception as e:
                 logger.error(f"Signup error: {e}")
