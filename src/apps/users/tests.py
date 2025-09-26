@@ -184,4 +184,5 @@ class MyUserAvatarTestCase(TestCase):
             last_name="Test"
         )
 
+        GravatarService().save_gravatar_to_user_avatar(user)
         mock_save.assert_called_once_with(user)
