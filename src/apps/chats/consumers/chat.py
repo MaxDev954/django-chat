@@ -67,7 +67,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 'sender': sender_id,
                 'text': text,
                 'timestamp': datetime.now(timezone.utc).isoformat(),
-                'user': MyUserSerializer(self.scope['user']).data
             }
 
             await database_sync_to_async(chat_service.send_message)(

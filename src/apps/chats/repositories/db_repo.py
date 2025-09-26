@@ -42,7 +42,6 @@ class DatabaseMessageRepo(IMessageRepo):
                 {
                     'sender': m.sender.id,
                     'text': m.text,
-                    'user': MyUserSerializer(m.sender).data,
                     'timestamp': m.timestamp.isoformat()
                 } for m in messages
             ]
@@ -57,7 +56,6 @@ class DatabaseMessageRepo(IMessageRepo):
                 {
                     'sender': m.sender.id,
                     'text': m.text,
-                    'user': MyUserSerializer(m.sender).data,
                     'timestamp': m.timestamp.isoformat()
                 } for m in messages
             ]
