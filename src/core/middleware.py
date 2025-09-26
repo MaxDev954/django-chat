@@ -13,9 +13,10 @@ class LoginRequiredMiddleware:
 
         if not request.user.is_authenticated:
             allowed_paths = [reverse('login'), reverse('signup')]
-            if request.path not in allowed_paths:
+            if not (request.path.startswith('/admin/') or request.path in allowed_paths):
                 return redirect('login')
-        if request.user.is_authenticated:
+
+        else:
             not_allowed_paths = [reverse('login'), reverse('signup')]
             if request.path in not_allowed_paths:
                 return redirect('select_room')
