@@ -2,6 +2,13 @@
 
 This is a real-time chat application built with a Django backend, WebSocket communication, and Redis for message caching. The frontend is implemented using HTML templates. The project follows SOLID principles to ensure maintainability and scalability.
 
+## Project Versions
+
+This project has two implementations:
+
+1. **Main branch (`main`)** – Traditional Django templates for frontend rendering.
+2. **DRF branch (`drf`)** – Django REST Framework (DRF) API backend for SPA/frontend or external clients.
+
 ## Features
 - **User Authentication**: Login and registration system for users.
 - **Room Management**: Users can create or join chat rooms.
@@ -45,7 +52,11 @@ docker-compose up
 
 4. Access the application at:\
 http://127.0.0.1:8000
-
+## Test
+```bash
+docker exec -it django_app bash
+pytest
+```
 ## Usage
 
 1. **Login/Register:** Create an account or log in to access the chat features.
