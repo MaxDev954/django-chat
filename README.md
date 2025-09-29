@@ -32,7 +32,7 @@ This project has two implementations:
    git clone <repository-url>
    cd <repository-directory>
    ```
-2. Create a .env file in the project root with the following configuration:
+2. **IF .env DOESN'T EXIST** сreate a .env file in the project root with the following configuration:
 ```
 POSTGRES_DB_NAME=postgres
 POSTGRES_DB_USER=postgres
