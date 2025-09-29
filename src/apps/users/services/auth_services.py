@@ -1,5 +1,5 @@
-from django.contrib.auth import get_user_model
-from django.db.models import Model
+from django.contrib.auth import get_user_model, authenticate
+from rest_framework.exceptions import ValidationError
 
 from apps.users.models import MyUserManager
 from apps.users.validators import validate_signup_data
@@ -26,4 +26,31 @@ class AuthService:
             return user
         except Exception as e:
             logger.error(f"Signup error: {e}")
-            raise
+            raise e
+
+    def login(self, data: dict) -> MyUser:
+        email = data.get("email")
+        password = data.get("password")
+
+        user = authenticate(email=email, password=password)
+
+        if not user:
+            logger.error(f"Login failed for {email}")
+            raise ValidationError("Incorrect email or password")
+
+        logger.info(f"User logged in: {user.email}")
+        return user
+
+    def register(self, data):
+        try:
+            user = self.repo.create_user(
+                email=data['email'],
+                first_name=data['first_name'],
+                last_name=data['last_name'],
+                password=data['password1']
+            )
+            return user
+        except Exception as e:
+            logger.error(f'Register error: {e}')
+            raise e
+

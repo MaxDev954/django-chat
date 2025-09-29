@@ -10,6 +10,7 @@ def validate_signup_data(data: dict):
     if not data.get('password'):
         raise ValidationError("Password is required")
 
+
 def validate_image_extension(file):
     ext = os.path.splitext(file.name)[1].lower()
     valid_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.svg', '.webp', '.heic']

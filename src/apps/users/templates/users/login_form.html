@@ -10,25 +10,23 @@
 <body>
     <div class="login-container">
         <h1>LOGIN</h1>
-        <form method="post" id="login-form">
+        <form id="login-form">
             {% csrf_token %}
-            {{ form.non_field_errors }}
+            <div id="form-errors"></div>
             <div class="input-group">
-                {{ form.email.label_tag }}
-                {{ form.email }}
-                {{ form.email.errors }}
+                <label for="id_email">Email:</label>
+                <input type="email" placeholder="your@gmail.com" name="email" id="id_email" required>
             </div>
             <div class="input-group">
-                {{ form.password.label_tag }}
-                {{ form.password }}
-                {{ form.password.errors }}
+                <label for="id_password">Password:</label>
+                <input type="password" placeholder="••••••••" name="password" id="id_password" required>
             </div>
-            <button type="submit">SIGN IN</button>
+            <button type="submit" id="submit-btn">SIGN IN</button>
         </form>
         <div class="footer">
             Don't have an account? <a href="{% url 'signup' %}">Sign up</a>
         </div>
     </div>
-    <script src="{% static 'users/js/form_validation.js' %}"></script>
+    <script src="{% static 'users/js/auth.js' %}"></script>
 </body>
 </html>

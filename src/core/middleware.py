@@ -11,6 +11,9 @@ class LoginRequiredMiddleware:
         if request.path.startswith(settings.STATIC_URL) or request.path.startswith(settings.MEDIA_URL):
             return self.get_response(request)
 
+        if request.path.startswith('/api/'):
+            return self.get_response(request)
+
         if not request.user.is_authenticated:
             allowed_paths = [reverse('login'), reverse('signup')]
             if not (request.path.startswith('/admin/') or request.path in allowed_paths):

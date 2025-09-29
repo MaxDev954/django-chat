@@ -27,6 +27,7 @@ urlpatterns = [
 
     path('api/', include([
         path('conversation/', include('apps.chats.api_urls')),
+        path('auth/', include('apps.users.api_urls')),
     ]))
 ]
 

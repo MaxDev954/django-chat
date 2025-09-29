@@ -227,3 +227,11 @@ REDIS_URL = os.getenv('REDIS_URL')
 GRAVATAR_URL = "https://www.gravatar.com/avatar/"
 HOST = os.getenv('HOST')
 DOMAIN = os.getenv('DOMAIN')
+
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+        "rest_framework.authentication.BasicAuthentication",
+    ],
+}
