@@ -6,6 +6,7 @@ from rest_framework.response import Response
 
 from apps.chats.forms import ChatRoomForm
 from apps.chats.models import Conversation
+from apps.chats.serializers import ConversationSerializer
 from apps.chats.services.notifier import ConversationNotifier
 from apps.chats.utils import get_ws_chat_url, get_ws_conversation_url, get_chat_select_url
 from loggers import get_django_logger
@@ -15,6 +16,9 @@ logger = get_django_logger()
 class ConversationViewSet(viewsets.ViewSet):
     queryset = Conversation.objects.all()
 
+    def list(self, request, *args, **kwargs):
+        serialized_data = ConversationSerializer(Conversation.objects.all(), many=True).data
+        return Response(serialized_data)
 
     def create(self, request, *args, **kwargs):
         title = request.data.get("title")
@@ -34,9 +38,9 @@ class ConversationViewSet(viewsets.ViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        ConversationNotifier.broadcast_conversations_add(str(conv.id))
+        print('sadfsadf')
 
-        return Response(status=status.HTTP_201_CREATED)
+        return Response({'id':str(conv.id)},status=status.HTTP_201_CREATED)
 
     def destroy(self, request, pk=None, *args, **kwargs):
         try:
